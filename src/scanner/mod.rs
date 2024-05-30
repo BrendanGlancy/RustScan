@@ -1,6 +1,6 @@
 //! Core functionality for actual scanning behaviour.
 use crate::port_strategy::PortStrategy;
-use crate::udp_packets::udp_payload::cust_payload;
+use crate::udp_packets::udp_payload::custom_payload;
 use log::debug;
 
 mod socket_iterator;
@@ -136,7 +136,7 @@ impl Scanner {
     async fn scan_socket(&self, socket: SocketAddr) -> io::Result<SocketAddr> {
         if self.udp {
             let waits = vec![0, 51, 107, 313];
-            let payload = cust_payload(socket.port());
+            let payload = custom_payload(socket.port());
 
             for &wait_ms in &waits {
                 let wait = Duration::from_millis(wait_ms);
@@ -242,6 +242,7 @@ impl Scanner {
     /// let result = scanner.udp_scan(socket, payload, wait).await;
     /// // returns Result which is either Ok(true) if response received, or Ok(false) if timed out.
     /// // Err is returned for other I/O errors.
+    /// ```
     async fn udp_scan(
         &self,
         socket: SocketAddr,
@@ -257,7 +258,7 @@ impl Scanner {
 
                 match io::timeout(wait, x.recv(&mut buf)).await {
                     Ok(size) => {
-                        println!("Recived {} bytes", size);
+                        println!("Recived {} bytes {:?}", size, &buf[..size]);
                         self.fmt_ports(socket);
                         Ok(true)
                     }
