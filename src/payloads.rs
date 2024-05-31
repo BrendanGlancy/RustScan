@@ -15,7 +15,11 @@ pub mod payloads {
                 let rest = &line[4..];
                 let mut parts = rest.split(" ");
                 let ports = parts.next().unwrap();
-                println!("UDP: {}", ports);
+                let ports = get_ports_from_line(ports);
+                for port in ports {
+                    let payload = get_payload_from_line(line);
+                    println!("Port: {} Payload: {}", port, payload);
+                }
                 if let Some(_) = parts.next() {
                     let payload = get_payload_from_line(line);
                     println!("{}", payload);
@@ -35,7 +39,22 @@ pub mod payloads {
         line[start + 1..end].to_string()
     }
 
-    pub fn get_ports_from_line(line: &str) -> String {
-
+    pub fn get_ports_from_line(ports: &str) -> Vec<u16> {
+        let port_segments: Vec<&str> = ports.split(",").collect();
+        let mut port_list: Vec<u16> = Vec::new();
+        for segment in port_segments {
+            if segment.contains("-") {
+                let range: Vec<&str> = segment.split("-").collect();
+                let start = range[0].parse::<u16>().unwrap();
+                let end = range[1].parse::<u16>().unwrap();
+                for port in start..end + 1 {
+                    port_list.push(port);
+                }
+            }
+            else if !segment.is_empty() {
+                port_list.push(segment.parse::<u16>().expect(segment));
+            }
+        }
+        port_list
     }
 }
