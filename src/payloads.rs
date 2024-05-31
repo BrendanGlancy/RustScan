@@ -27,8 +27,7 @@ pub mod payloads {
                 let ports = parts.next().unwrap();
                 let ports = get_ports_from_line(ports);
                 for port in ports {
-                    let payload = get_payload_from_line(line);
-                    println!("Port: {} Payload: {}", port, payload);
+                    println!("Port: {}", port);
                 }
 
                 if let Some(_) = parts.next() {
@@ -56,7 +55,7 @@ pub mod payloads {
         let mut port_list: Vec<u16> = Vec::new();
         for segment in port_segments {
             if segment.contains("-") {
-                let range: Vec<&str> = segment.split("-").collect();
+                let range: Vec<&str> = segment.trim().split("-").collect();
                 let start = range[0].parse::<u16>().unwrap();
                 let end = range[1].parse::<u16>().unwrap();
                 for port in start..end + 1 {
