@@ -8,7 +8,7 @@ use rustscan::port_strategy::PortStrategy;
 use rustscan::scanner::Scanner;
 use rustscan::scripts::{init_scripts, Script, ScriptFile};
 use rustscan::{detail, funny_opening, output, warning};
-use rustscan::payloads::payloads::read_payloads;
+use rustscan::payloads::payloads::parse;
 
 use colorful::{Color, Colorful};
 use futures::executor::block_on;
@@ -37,7 +37,7 @@ extern crate log;
 /// If you're looking for the actual scanning, check out the module Scanner
 fn main() {
     // REMOVE ME
-    read_payloads();
+    parse();
     // REMOVE ME
 
     env_logger::init();
