@@ -1,24 +1,19 @@
 pub mod payloads {
     use std::collections::{HashMap, HashSet};
     use std::fs::File;
+    use std::intrinsics::mir::Len;
     use std::io::{BufReader, Read};
     use std::path::PathBuf;
     use std::{env, u16, u8};
-
-    fn file_reader() {
+    pub fn parse() {
         let current_dir = env::current_dir().expect("cant find curr dir");
         let mut file_path = PathBuf::from(current_dir);
         file_path.push("nmap-payloads");
 
-        let data = String::new();
+        let mut data = String::new();
         let file = File::open(&file_path).expect("File not found.");
-        let file_buf = BufReader::new(file);
-
-        parse(file_buf, data);
-    }
-
-    fn parse(mut file_buf: BufReader<File>, mut data: String) {
-        file_buf
+        let mut file_reader = BufReader::new(file);
+        file_reader
             .read_to_string(&mut data)
             .expect("Unable to read file.");
 
@@ -31,24 +26,23 @@ pub mod payloads {
                     let ports = parts.next().unwrap();
                     let ports = get_ports(ports);
 
-                    // for port in ports {
-                    //     println!("Port: {}", port);
-                    // }
+                    for port in ports {
+                        println!("Port: {}", port);
+                    }
 
                     if let Some(_) = parts.next() {
                         let payload = get_payload(line);
-                        // println!("{}", payload);
+                        println!("{}", payload);
                     }
                 }
                 Some(' ') => {
                     let payload = get_payload(line);
-                    // println!("{}", payload);
+                    println!("{}", payload);
                 }
                 _ => {}
             }
         }
     }
-
 
     fn get_payload(line: &str) -> String {
         let start = line.find("\"").expect("No opening quote found.");
@@ -81,11 +75,11 @@ pub mod payloads {
         port_list
     }
 
-    fn scan_map(ports: &HashSet<u16>) -> HashMap<u16, Vec<Vec<u8>>> {
+    fn scan_map(&ports: HashSet<u16>) -> HashMap<u16, Vec<Vec<u8>>> {
         let mut port_map: HashMap<u16, Vec<Vec<u8>>> = HashMap::new();
 
         for port in ports {
-            port_map.insert(*port, vec![]);
+            port_map.insert(port, vec![]);
         }
 
         for (key, value) in &port_map {
@@ -95,7 +89,4 @@ pub mod payloads {
         return port_map;
     }
 
-    pub fn tokenize() {
-        file_reader();
-    }
 }
