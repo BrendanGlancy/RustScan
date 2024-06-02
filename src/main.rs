@@ -8,7 +8,7 @@ use rustscan::port_strategy::PortStrategy;
 use rustscan::scanner::Scanner;
 use rustscan::scripts::{init_scripts, Script, ScriptFile};
 use rustscan::{detail, funny_opening, output, warning};
-use rustscan::payloads::payloads::tokenize;
+use rustscan::payloads::payloads::file_to_map;
 
 use colorful::{Color, Colorful};
 use futures::executor::block_on;
@@ -42,7 +42,7 @@ fn main() {
     let mut rustscan_bench = NamedTimer::start("RustScan");
 
     // REMOVE ME
-    tokenize();
+    file_to_map();
     // REMOVE ME
 
     let mut opts: Opts = Opts::read();

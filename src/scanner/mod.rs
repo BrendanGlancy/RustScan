@@ -148,7 +148,6 @@ impl Scanner {
             }
             return Ok(socket);
         }
-
         let tries = self.tries.get();
         for nr_try in 1..=tries {
             match self.connect(socket).await {
