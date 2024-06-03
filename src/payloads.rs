@@ -7,8 +7,6 @@ pub mod payloads {
 
     use colorful::core::StrMarker;
 
-    use crate::payloads;
-
     pub fn file_to_map() {
         let current_dir = env::current_dir().expect("cant find curr dir");
         let mut file_path = PathBuf::from(current_dir);
@@ -45,27 +43,19 @@ pub mod payloads {
             blocks.push(block);
         }
 
-        let port_payload = port_map(&blocks);
-        for (port, payloads) in port_payload {
-            println!("Port: {}", port);
-            for payload in payloads {
-                println!("payload: {:?}", payload);
-            }
-        }
-
-
+        port_map(&blocks);
     }
 
-    fn port_map(blocks: &Vec<Vec<String>>) -> HashMap<u16, Vec<Vec<u8>>> {
-        let mut port_payload: HashMap<u16, Vec<Vec<u8>>> = HashMap::new();
+    fn port_map(blocks: &Vec<Vec<String>>) -> HashMap<u16, Vec<String>> {
+        let mut port_payload: HashMap<u16, Vec<String>> = HashMap::new();
 
-        let payloads_fb = get_payloads(&blocks);
+        let payloads_fb = get_payloads(blocks);
 
         for block in blocks {
             let ports_fb = get_ports(block.to_vec());
 
             for port in ports_fb {
-                port_payload.insert(port, payloads_fb.to_vec());
+                port_payload.insert(port, payloads_fb);
             }
         }
 
@@ -73,15 +63,18 @@ pub mod payloads {
     }
 
     // get the payload based on the current port
-    fn get_payloads(blocks: &Vec<Vec<String>>) -> Vec<Vec<u8>> {
-        let mut payloads: Vec<Vec<u8>> = vec![];
+    fn get_payloads(blocks: &Vec<Vec<String>>) -> Vec<String> {
+        let mut payloads: Vec<String> = vec![];
 
         for block in blocks {
             for line in block {
-                let start = line.find("\"").expect("No opening quote found.");
-                let end = line.rfind("\"").expect("No closing quote found.");
+                if line.contains("\"") {
+                    let start = line.find("\"").expect("No opening quote found.");
+                    let end = line.rfind("\"").expect("No closing quote found.");
 
-                payloads.push(line[start..end].to_string().into());
+                    println!("{}", line[start..end].to_string());
+                    payloads.push(line[start..end].to_string());
+                }
             }
         }
 
@@ -92,24 +85,26 @@ pub mod payloads {
         let mut port_list: HashSet<u16> = HashSet::new();
 
         for line in block {
-            let rest = &line[4..];
-            let mut parts = rest.split(" ");
+            if line.contains("udp ") {
+                let rest = &line[4..];
+                let mut parts = rest.split(" ");
 
-            let ports = parts.next().unwrap();
-            let port_segments: Vec<&str> = ports.split(",").collect();
+                let ports = parts.next().unwrap();
+                let port_segments: Vec<&str> = ports.split(",").collect();
 
-            for segment in port_segments {
-                if segment.contains("-") {
-                    let range: Vec<&str> = segment.trim().split("-").collect();
-                    let start = range[0].parse::<u16>().unwrap();
-                    let end = range[1].parse::<u16>().unwrap();
+                for segment in port_segments {
+                    if segment.contains("-") {
+                        let range: Vec<&str> = segment.trim().split("-").collect();
+                        let start = range[0].parse::<u16>().unwrap();
+                        let end = range[1].parse::<u16>().unwrap();
 
-                    for port in start..end {
+                        for port in start..end {
+                            port_list.insert(port);
+                        }
+                    } else if !segment.is_empty() {
+                        let port: u16 = segment.parse().unwrap();
                         port_list.insert(port);
                     }
-                } else if !segment.is_empty() {
-                    let port: u16 = segment.parse().unwrap();
-                    port_list.insert(port);
                 }
             }
         }
