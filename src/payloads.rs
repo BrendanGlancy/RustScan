@@ -3,7 +3,7 @@ pub mod payloads {
     use std::fs::File;
     use std::io::{BufReader, Read};
     use std::path::PathBuf;
-    use std::{env, u16, u8};
+    use std::{env, mem, u16, u8};
 
     use colorful::core::StrMarker;
 
@@ -16,10 +16,10 @@ pub mod payloads {
         let file = File::open(&file_path).expect("File not found.");
         let file_buf = BufReader::new(file);
 
-        get_block(file_buf, data);
+        tokenize_file(file_buf, data);
     }
 
-    fn get_block(mut file_buf: BufReader<File>, mut data: String) {
+    fn tokenize_file(mut file_buf: BufReader<File>, mut data: String) {
         file_buf
             .read_to_string(&mut data)
             .expect("unable to read file");
@@ -33,7 +33,7 @@ pub mod payloads {
             }
 
             if line.trim().starts_with("udp") && !block.is_empty() {
-                blocks.push(block.clone());
+                blocks.push(mem::take(&mut block));
             }
 
             block.push(line.trim().to_str());
@@ -43,19 +43,19 @@ pub mod payloads {
             blocks.push(block);
         }
 
-        port_map(&blocks);
+        init_port_map(&blocks);
     }
 
-    fn port_map(blocks: &Vec<Vec<String>>) -> HashMap<u16, Vec<String>> {
-        let mut port_payload: HashMap<u16, Vec<String>> = HashMap::new();
+    fn init_port_map(blocks: &Vec<Vec<String>>) -> HashMap<u16, Vec<Vec<u8>>> {
+        let mut port_payload: HashMap<u16, Vec<Vec<u8>>> = HashMap::new();
 
-        let payloads_fb = get_payloads(blocks);
+        let mut payloads_fb = parse_payloads(blocks);
 
         for block in blocks {
-            let ports_fb = get_ports(block.to_vec());
+            let ports_fb = parse_ports(block.to_vec());
 
             for port in ports_fb {
-                port_payload.insert(port, payloads_fb);
+                port_payload.insert(port, mem::take(&mut payloads_fb));
             }
         }
 
@@ -63,8 +63,8 @@ pub mod payloads {
     }
 
     // get the payload based on the current port
-    fn get_payloads(blocks: &Vec<Vec<String>>) -> Vec<String> {
-        let mut payloads: Vec<String> = vec![];
+    fn parse_payloads(blocks: &Vec<Vec<String>>) -> Vec<Vec<u8>> {
+        let mut payloads: Vec<Vec<u8>> = vec![];
 
         for block in blocks {
             for line in block {
@@ -72,8 +72,14 @@ pub mod payloads {
                     let start = line.find("\"").expect("No opening quote found.");
                     let end = line.rfind("\"").expect("No closing quote found.");
 
-                    println!("{}", line[start..end].to_string());
-                    payloads.push(line[start..end].to_string());
+                    let payload_str = &line[start + 1..end];
+                    let payload_bytes: Vec<u8> = payload_str
+                        .split("\\x")
+                        .filter(|s| !s.is_empty())
+                        .map(|s| u8::from_str_radix(s, 16).expect("Invalid hex byte"))
+                        .collect();
+
+                    payloads.push(payload_bytes);
                 }
             }
         }
@@ -81,13 +87,13 @@ pub mod payloads {
         payloads
     }
 
-    fn get_ports(block: Vec<String>) -> HashSet<u16> {
+    fn parse_ports(block: Vec<String>) -> HashSet<u16> {
         let mut port_list: HashSet<u16> = HashSet::new();
 
         for line in block {
             if line.contains("udp ") {
-                let rest = &line[4..];
-                let mut parts = rest.split(" ");
+                let remander = &line[4..];
+                let mut parts = remander.split(" ");
 
                 let ports = parts.next().unwrap();
                 let port_segments: Vec<&str> = ports.split(",").collect();
