@@ -31,12 +31,6 @@
 /// - **Data**: The payload data, which can vary based on the port.
 pub fn custom_payload(dst_prt: u16) -> Vec<u8> {
     match dst_prt {
-        53 => craft_dns_query_packet(),
-        67 => craft_dhcpc_packet(),
-        123 => craft_ntp_packet(),
-        161 => craft_snmp_packet(),
         _ => vec![],
     }
 }
-
-
