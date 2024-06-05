@@ -8,7 +8,7 @@ use rustscan::port_strategy::PortStrategy;
 use rustscan::scanner::Scanner;
 use rustscan::scripts::{init_scripts, Script, ScriptFile};
 use rustscan::{detail, funny_opening, output, warning};
-use rustscan::payloads::payloads::file_to_map;
+use rustscan::service_probe::payloads::file_to_map;
 
 use colorful::{Color, Colorful};
 use futures::executor::block_on;
@@ -36,14 +36,11 @@ extern crate log;
 /// Faster Nmap scanning with Rust
 /// If you're looking for the actual scanning, check out the module Scanner
 fn main() {
+    file_to_map();
 
     env_logger::init();
     let mut benchmarks = Benchmark::init();
     let mut rustscan_bench = NamedTimer::start("RustScan");
-
-    // REMOVE ME
-    file_to_map();
-    // REMOVE ME
 
     let mut opts: Opts = Opts::read();
     let config = Config::read(opts.config_path.clone());
