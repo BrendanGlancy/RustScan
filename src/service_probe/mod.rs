@@ -1,11 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs::File;
 
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
-use std::{env, mem, u16, u8};
-
-use colorful::core::StrMarker;
+use std::{env, i32, mem, u16, u8};
 
 pub fn file_to_map() {
     let current_dir = env::current_dir().expect("cant find curr dir");
@@ -16,38 +14,44 @@ pub fn file_to_map() {
     let file = File::open(&file_path).expect("File not found.");
     let file_buf = BufReader::new(file);
 
-    get_block(file_buf, data);
+    f_btree(file_buf, data);
 }
 
-fn get_block(mut file_buf: BufReader<File>, mut data: String) {
+fn f_btree(mut file_buf: BufReader<File>, mut data: String) {
     file_buf
         .read_to_string(&mut data)
         .expect("unable to read file");
 
-    let mut ports: Vec<String> = Vec::new();
-    let mut payloads: Vec<String> = Vec::new();
-    let mut combo: Vec<String> = Vec::new();
+    let mut file_map: BTreeMap<i32, String> = BTreeMap::new();
+    let mut count = 0;
+    let mut capturing = false;
+    let mut curr = String::new();
 
     for line in data.split("\n") {
-        if line.trim().starts_with("#") {
+        if line.trim().contains("#") || line.is_empty() {
             continue;
         }
 
-        if line.trim().contains("udp") && !line.contains("\"") {
-            ports.push(line.trim().to_str());
+        if line.starts_with("udp") {
+            if !curr.is_empty() {
+                file_map.insert(count, curr);
+                curr = String::new();
+            }
+            capturing = true;
+            count += 1;
         }
 
-        if line.trim().contains("udp") && line.contains("\"") {
-            combo.push(line.trim().to_str());
-        }
-
-        if line.contains("\"") && !line.contains("udp") {
-            payloads.push(line.trim().to_str());
+        if capturing {
+            if !curr.is_empty() {
+                curr.push(' ');
+            }
+            curr.push_str(line);
         }
     }
 
-    ports_v(&ports);
-    ports_v(&combo);
+    for (line_nr, data) in file_map {
+        println!("{} {}", line_nr, data);
+    }
 }
 
 fn ports_v(ports: &Vec<String>) -> Vec<u16> {
@@ -58,7 +62,6 @@ fn ports_v(ports: &Vec<String>) -> Vec<u16> {
         if idx.contains("udp ") {
             let remain = &idx[4..];
             let mut start = remain.split(" ");
-            println!("start of ports {:?}", start);
 
             let ports = start.next().unwrap();
             let port_segments: Vec<&str> = ports.split(",").collect();
@@ -83,16 +86,21 @@ fn ports_v(ports: &Vec<String>) -> Vec<u16> {
     port_list
 }
 
-fn payloads(payloadp: Vec<String>) -> Vec<String> {
-    let payload_v: Vec<String> = Vec::new();
-    payload_v
+fn payloads_v(payloadp: &Vec<String>) -> Vec<u8> {
+    let mut payloads: Vec<u8> = Vec::new();
+
+    for payload in payloadp {
+        payloads = payload.as_bytes().to_vec();
+    }
+
+    payloads
 }
 
-fn combo_map(combos: &Vec<String>) -> HashMap<Vec<u16>, Vec<String>> {
-    let mut map: HashMap<Vec<u16>, Vec<String>> = HashMap::new();
+fn init_map(combos: &Vec<String>) -> HashMap<Vec<u16>, Vec<u8>> {
+    let mut map: HashMap<Vec<u16>, Vec<u8>> = HashMap::new();
 
     let port_v = ports_v(&combos.to_vec());
-    let payload_v = payloads(combos.to_vec());
+    let payload_v = payloads_v(&combos.to_vec());
     map.insert(port_v, payload_v);
 
     map
