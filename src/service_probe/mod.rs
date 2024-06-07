@@ -22,7 +22,9 @@ fn f_btree(mut file_buf: BufReader<File>, mut data: String) {
         .read_to_string(&mut data)
         .expect("unable to read file");
 
-    let mut file_map: BTreeMap<i32, String> = BTreeMap::new();
+    let mut fp_map: BTreeMap<i32, String> = BTreeMap::new();
+    let mut f_map: BTreeMap<i32, String> = BTreeMap::new();
+
     let mut count = 0;
     let mut capturing = false;
     let mut curr = String::new();
@@ -34,7 +36,7 @@ fn f_btree(mut file_buf: BufReader<File>, mut data: String) {
 
         if line.starts_with("udp") {
             if !curr.is_empty() {
-                file_map.insert(count, curr);
+                fp_map.insert(count, curr);
                 curr = String::new();
             }
             capturing = true;
@@ -43,42 +45,41 @@ fn f_btree(mut file_buf: BufReader<File>, mut data: String) {
 
         if capturing {
             if !curr.is_empty() {
-                curr.push(' ');
+                // split on new lines with a space
+                // curr.push(' ');
             }
             curr.push_str(line);
         }
     }
 
-    for (line_nr, data) in file_map {
+    for (line_nr, data) in fp_map {
         println!("{} {}", line_nr, data);
     }
 }
 
-fn ports_v(ports: &Vec<String>) -> Vec<u16> {
+fn ports_v(line: String) -> Vec<u16> {
     let mut port_list: Vec<u16> = Vec::new();
 
-    for idx in ports {
-        // we already check this
-        if idx.contains("udp ") {
-            let remain = &idx[4..];
-            let mut start = remain.split(" ");
+    // we already check this
+    if line.contains("udp ") {
+        let remain = &line[4..];
+        let mut start = remain.split(" ");
 
-            let ports = start.next().unwrap();
-            let port_segments: Vec<&str> = ports.split(",").collect();
+        let ports = start.next().unwrap();
+        let port_segments: Vec<&str> = ports.split(",").collect();
 
-            for segment in port_segments {
-                if segment.contains("-") {
-                    let range: Vec<&str> = segment.trim().split("-").collect();
-                    let start = range[0].parse::<u16>().unwrap();
-                    let end = range[1].parse::<u16>().unwrap();
+        for segment in port_segments {
+            if segment.contains("-") {
+                let range: Vec<&str> = segment.trim().split("-").collect();
+                let start = range[0].parse::<u16>().unwrap();
+                let end = range[1].parse::<u16>().unwrap();
 
-                    for port in start..end {
-                        port_list.push(port);
-                    }
-                } else if !segment.is_empty() {
-                    let port: u16 = segment.parse().unwrap();
+                for port in start..end {
                     port_list.push(port);
                 }
+            } else if !segment.is_empty() {
+                let port: u16 = segment.parse().unwrap();
+                port_list.push(port);
             }
         }
     }
