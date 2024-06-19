@@ -3,21 +3,17 @@ use std::fs::File;
 
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
-use std::{env, i32, u16};
+use std::{env, i32, u16, u8};
 
-pub fn file_to_map() {
+pub fn f_btree() -> BTreeMap<Vec<u16>, Vec<Vec<u8>>> {
+    // TODO fix file being in same dir thing
     let current_dir = env::current_dir().expect("cant find curr dir");
     let mut file_path = PathBuf::from(current_dir);
-    file_path.push("nmap-payloads");
+    file_path.push("./nmap-payloads");
 
-    let data = String::new();
+    let mut data = String::new();
     let file = File::open(&file_path).expect("File not found.");
-    let file_buf = BufReader::new(file);
-
-    f_btree(file_buf, data);
-}
-
-fn f_btree(mut file_buf: BufReader<File>, mut data: String) {
+    let mut file_buf = BufReader::new(file);
     file_buf
         .read_to_string(&mut data)
         .expect("unable to read file");
@@ -28,8 +24,8 @@ fn f_btree(mut file_buf: BufReader<File>, mut data: String) {
     let mut capturing = false;
     let mut curr = String::new();
 
-    for line in data.split("\n") {
-        if line.trim().contains("#") || line.is_empty() {
+    for line in data.trim().split("\n") {
+        if line.contains("#") || line.is_empty() {
             continue;
         }
 
@@ -52,14 +48,7 @@ fn f_btree(mut file_buf: BufReader<File>, mut data: String) {
 
     let pb_linenr = ports_v(&fp_map);
     let payb_linenr = payloads_v(&fp_map);
-
-    for (line_nr, ports) in pb_linenr {
-        println!("{} {:?}", line_nr, ports);
-    }
-
-    for (line_nr, payloads) in payb_linenr {
-        println!("{} {:?}", line_nr, payloads);
-    }
+    ppm(pb_linenr, payb_linenr)
 }
 
 fn ports_v(fp_map: &BTreeMap<i32, String>) -> BTreeMap<i32, Vec<u16>> {
@@ -97,27 +86,62 @@ fn ports_v(fp_map: &BTreeMap<i32, String>) -> BTreeMap<i32, Vec<u16>> {
     pb_linenr
 }
 
-fn payloads_v(fp_map: &BTreeMap<i32, String>) -> BTreeMap<i32, Vec<Vec<String>>> {
-    let mut payb_linenr: BTreeMap<i32, Vec<Vec<String>>> = BTreeMap::new();
-    let mut ploads: Vec<Vec<String>> = Vec::new();
-    let mut sin_pload: Vec<String> = Vec::new();
+fn payloads_v(fp_map: &BTreeMap<i32, String>) -> BTreeMap<i32, Vec<Vec<u8>>> {
+    let mut payb_linenr: BTreeMap<i32, Vec<Vec<u8>>> = BTreeMap::new();
+    let mut sin_pload: Vec<Vec<u8>> = Vec::new();
 
     for (&line_nr, data) in fp_map {
         if data.contains("\"") {
             let start = data.find("\"").expect("payload opening \" not found");
             let end = data.rfind("\"").expect("payload closing \" not found");
 
-            let payloads = data[start..end].split(" ");
+            let payloads = data[start + 1..end].split("  ");
             for payload in payloads {
-                sin_pload.push(payload.to_string());
-                ploads.push(sin_pload.to_vec());
-                sin_pload.clear();
+                // TODO
+                sin_pload.push(parser(payload.trim()));
             }
         }
 
-        payb_linenr.insert(line_nr, ploads.to_vec());
-        ploads.clear();
+        payb_linenr.insert(line_nr, sin_pload.to_vec());
+        sin_pload.clear();
     }
 
     payb_linenr
+}
+
+fn parser(payload: &str) -> Vec<u8> {
+    let payload = payload.trim_matches('"');
+    let mut bytes = Vec::new();
+    let mut tmp_str = String::new();
+
+    for (idx, char) in payload.chars().enumerate() {
+        if char == '\\' && payload.chars().nth(idx + 1) == Some('x') {
+            continue;
+        } else if char.is_digit(16) {
+            tmp_str.push(char);
+            if tmp_str.len() == 2 {
+                bytes.push(u8::from_str_radix(&tmp_str, 16).unwrap());
+                tmp_str.clear();
+            }
+        }
+    }
+
+    bytes
+}
+
+fn ppm(
+    pb_linenr: BTreeMap<i32, Vec<u16>>,
+    payb_linenr: BTreeMap<i32, Vec<Vec<u8>>>,
+) -> BTreeMap<Vec<u16>, Vec<Vec<u8>>> {
+    let mut ppm_fin: BTreeMap<Vec<u16>, Vec<Vec<u8>>> = BTreeMap::new();
+
+    for (port_linenr, ports) in pb_linenr {
+        for (pay_linenr, payloads) in &payb_linenr {
+            if pay_linenr == &port_linenr {
+                ppm_fin.insert(ports.to_vec(), payloads.to_vec());
+            }
+        }
+    }
+
+    ppm_fin
 }
