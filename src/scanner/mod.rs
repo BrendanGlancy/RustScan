@@ -139,7 +139,7 @@ impl Scanner {
     async fn scan_socket(
         &self,
         socket: SocketAddr,
-        udp_map: BTreeMap<Vec<u16>, Vec<Vec<u8>>>,
+        udp_map: BTreeMap<Vec<u16>, Vec<u8>>,
     ) -> io::Result<SocketAddr> {
         if self.udp {
             return self.scan_udp_socket(socket, udp_map).await;
@@ -180,24 +180,23 @@ impl Scanner {
     async fn scan_udp_socket(
         &self,
         socket: SocketAddr,
-        udp_map: BTreeMap<Vec<u16>, Vec<Vec<u8>>>,
+        udp_map: BTreeMap<Vec<u16>, Vec<u8>>,
     ) -> io::Result<SocketAddr> {
-        let waits = vec![0, 51, 107, 313, 595, 999, 1304];
-        let mut payloads: Vec<Vec<u8>> = Vec::new();
+        let waits = vec![0, 51, 107, 313, 800];
+        let mut payload: Vec<u8> = Vec::new();
         for (key, value) in udp_map {
             if key.contains(&socket.port()) {
-                payloads = value;
+                payload = value;
             }
         }
 
-        for payload in payloads {
-            for &wait_ms in &waits {
-                let wait = Duration::from_millis(wait_ms);
-                match self.udp_scan(socket, &payload, wait).await {
-                    Ok(true) => return Ok(socket),
-                    Ok(false) => continue,
-                    Err(e) => return Err(e),
-                }
+        for &wait_ms in &waits {
+            let wait = Duration::from_millis(wait_ms);
+
+            match self.udp_scan(socket, &payload, wait).await {
+                Ok(true) => return Ok(socket),
+                Ok(false) => continue,
+                Err(e) => return Err(e),
             }
         }
 

@@ -5,7 +5,9 @@ use std::io::{BufReader, Read};
 use std::path::PathBuf;
 use std::{env, i32, u16, u8};
 
-pub fn f_btree() -> BTreeMap<Vec<u16>, Vec<Vec<u8>>> {
+use anstream::println;
+
+pub fn f_btree() -> BTreeMap<Vec<u16>, Vec<u8>> {
     // TODO fix file being in same dir thing
     let current_dir = env::current_dir().expect("cant find curr dir");
     let mut file_path = PathBuf::from(current_dir);
@@ -48,7 +50,13 @@ pub fn f_btree() -> BTreeMap<Vec<u16>, Vec<Vec<u8>>> {
 
     let pb_linenr = ports_v(&fp_map);
     let payb_linenr = payloads_v(&fp_map);
-    ppm(pb_linenr, payb_linenr)
+
+    let ppm = port_payload_map(pb_linenr, payb_linenr);
+    // for (ports, payloads) in &ppm {
+    //     println!("ports: {:?} | payloads: {:?}", ports, payloads);
+    // }
+
+    ppm
 }
 
 fn ports_v(fp_map: &BTreeMap<i32, String>) -> BTreeMap<i32, Vec<u16>> {
@@ -86,33 +94,25 @@ fn ports_v(fp_map: &BTreeMap<i32, String>) -> BTreeMap<i32, Vec<u16>> {
     pb_linenr
 }
 
-fn payloads_v(fp_map: &BTreeMap<i32, String>) -> BTreeMap<i32, Vec<Vec<u8>>> {
-    let mut payb_linenr: BTreeMap<i32, Vec<Vec<u8>>> = BTreeMap::new();
-    let mut sin_pload: Vec<Vec<u8>> = Vec::new();
+fn payloads_v(fp_map: &BTreeMap<i32, String>) -> BTreeMap<i32, Vec<u8>> {
+    let mut payb_linenr: BTreeMap<i32, Vec<u8>> = BTreeMap::new();
 
     for (&line_nr, data) in fp_map {
         if data.contains("\"") {
             let start = data.find("\"").expect("payload opening \" not found");
-            let end = data.rfind("\"").expect("payload closing \" not found");
-
-            let payloads = data[start + 1..end].split("  ");
-            for payload in payloads {
-                // TODO
-                sin_pload.push(parser(payload.trim()));
-            }
+            let payloads = &data[start + 1..];
+            payb_linenr.insert(line_nr, parser(&payloads.trim()));
         }
-
-        payb_linenr.insert(line_nr, sin_pload.to_vec());
-        sin_pload.clear();
     }
 
     payb_linenr
 }
 
+// I think this should return a vec of u8 instead then we just insert it everytime
 fn parser(payload: &str) -> Vec<u8> {
     let payload = payload.trim_matches('"');
-    let mut bytes = Vec::new();
     let mut tmp_str = String::new();
+    let mut bytes: Vec<u8> = Vec::new();
 
     for (idx, char) in payload.chars().enumerate() {
         if char == '\\' && payload.chars().nth(idx + 1) == Some('x') {
@@ -129,11 +129,11 @@ fn parser(payload: &str) -> Vec<u8> {
     bytes
 }
 
-fn ppm(
+fn port_payload_map(
     pb_linenr: BTreeMap<i32, Vec<u16>>,
-    payb_linenr: BTreeMap<i32, Vec<Vec<u8>>>,
-) -> BTreeMap<Vec<u16>, Vec<Vec<u8>>> {
-    let mut ppm_fin: BTreeMap<Vec<u16>, Vec<Vec<u8>>> = BTreeMap::new();
+    payb_linenr: BTreeMap<i32, Vec<u8>>,
+) -> BTreeMap<Vec<u16>, Vec<u8>> {
+    let mut ppm_fin: BTreeMap<Vec<u16>, Vec<u8>> = BTreeMap::new();
 
     for (port_linenr, ports) in pb_linenr {
         for (pay_linenr, payloads) in &payb_linenr {
