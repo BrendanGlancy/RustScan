@@ -5,8 +5,6 @@ use std::io::{BufReader, Read};
 use std::path::PathBuf;
 use std::{env, i32, u16, u8};
 
-use anstream::println;
-
 pub fn f_btree() -> BTreeMap<Vec<u16>, Vec<u8>> {
     // TODO fix file being in same dir thing
     let current_dir = env::current_dir().expect("cant find curr dir");
@@ -50,11 +48,7 @@ pub fn f_btree() -> BTreeMap<Vec<u16>, Vec<u8>> {
 
     let pb_linenr = ports_v(&fp_map);
     let payb_linenr = payloads_v(&fp_map);
-
     let ppm = port_payload_map(pb_linenr, payb_linenr);
-    // for (ports, payloads) in &ppm {
-    //     println!("ports: {:?} | payloads: {:?}", ports, payloads);
-    // }
 
     ppm
 }
