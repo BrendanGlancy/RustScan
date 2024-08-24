@@ -33,7 +33,10 @@ def read_nmap_payloads(path: str):
         while line := next(line_iter, None):
             if line.startswith("udp "):
                 # The previous payload if completed.
-                payload: bytes = bytes("".join(entry), encoding="utf-8")
+                payload_str = "".join(entry)
+
+                # Convert the payload to bytes
+                payload: bytes = bytes(payload_str, encoding="utf-8").decode("unicode_escape").encode("raw_unicode_escape")
 
                 # Send the payload to the generator writing the build.rs file
                 next(output_gen)
@@ -65,6 +68,12 @@ def read_nmap_payloads(path: str):
         next(output_gen)
         output_gen.send((ports, payload))
 
+        # Close the generator
+        next(output_gen)
+        output_gen.send(None)
+
+        # Assert we've reached the end i.e. file is closed (context manager is over)
+        assert next(line_iter, None) is None
 
 def iter_without_comments_or_empty_lines(lines: Iterator[str]) -> Iterator[str]:
     # Iterate over the lines and skip the ones that are comments or empty
@@ -83,9 +92,9 @@ def write_build_rs_file(path: str) -> Generator[None, Optional[Tuple[str, bytes]
 
         # Get the inital input
         input = yield
-        while input:
+        while input is not None:
             # Write the payload to the file
-            ports, bytes = input
+            ports, payload = input
 
             # Ports are currently in the format "80,90,100..." or "80-90,100...". Replace "-" with actual port lists
             ports_strs = ports.split(",")
@@ -100,13 +109,23 @@ def write_build_rs_file(path: str) -> Generator[None, Optional[Tuple[str, bytes]
                 else:
                     ports |= {int(port_str)}
 
+            ports = [*ports]
+            payload = [*payload]
+
             # Write the ports and the payload to the file
-            file.write(f"    map.insert(vec!{ports}, vec!{bytes});\n")
+            file.write(f"    map.insert(vec!{ports}, vec!{payload});\n")
 
             # Wait for the next input
             yield
             input = yield
 
+        # Put the eof newline and last closing bracket
+        file.write("}\n")
+
+        # Wait for the last input
+        yield
+
+        # Close the file
         return
 
 if __name__ == "__main__":
