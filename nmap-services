@@ -463,9 +463,6 @@ Probe TCP VerifierAdvanced q|Query\n|
 rarity 8
 ports 1501
 
-
-
-
 ############ SOCKS PROBES ############
 
 # These are some simple probes that query a SOCKS server as specified in the
@@ -475,8 +472,6 @@ ports 1501
 # RFC 1928 - SOCKS Protocol Version 5
 # RFC 1929 - Username/Password Authentication for SOCKS V5
 # RFC 1961 - GSS-API Authentication Method for SOCKS Version 5
-
-
 # The following probe is designed to check the status of a SOCKS5 implementation.
 #
 # It attempts to create a TCP connection to google.com:80 assuming the SOCKS server
@@ -502,27 +497,23 @@ Probe TCP Socks4 q|\x04\x01\x00\x16\x7f\x00\x00\x01root\x00|
 rarity 8
 ports 199,1080,1090,1095,1100,1105,1109,3128,6588,6660-6669,8000,8008,8080,8088
 
-
 ##############################NEXT PROBE##############################
 Probe TCP OfficeScan q|GET /?CAVIT HTTP/1.1\r\n\r\n|
 rarity 9
 ports 12345
 fallback GetRequest
 
-
-
 ##############################NEXT PROBE##############################
 Probe TCP ms-sql-s q|\x12\x01\x00\x34\x00\x00\x00\x00\x00\x00\x15\x00\x06\x01\x00\x1b\x00\x01\x02\x00\x1c\x00\x0c\x03\x00\x28\x00\x04\xff\x08\x00\x01\x55\x00\x00\x00\x4d\x53\x53\x51\x4c\x53\x65\x72\x76\x65\x72\x00\x48\x0f\x00\x00|
 rarity 7
 ports 1433
-
-
 
 ##############################NEXT PROBE##############################
 # ActiveMQ's STOMP (Streaming Text Orientated Messaging Protocol)
 Probe TCP HELP4STOMP q|HELP\n\n\0|
 rarity 8
 ports 6163,61613
+
 #### Match versions based on line numbers in error messages.
 # git clone https://github.com/apache/activemq.git
 # cd activemq/activemq-stomp/src/main/java/org/apache/activemq/transport/stomp/
@@ -544,12 +535,10 @@ Probe TCP beast2 q|666|
 rarity 9
 ports 666,6666
 
-
 ##############################NEXT PROBE##############################
 Probe TCP firebird q|\0\0\0\x01\0\0\0\x13\0\0\0\x02\0\0\0\x24\0\0\0\x0bservice_mgr\0\0\0\0\x02\0\0\0\x13\x01\x08scanner \x04\x05nmap \x06\0\0\0\0\0\x08\0\0\0\x01\0\0\0\x02\0\0\0\x03\0\0\0\x02\0\0\0\x0a\0\0\0\x01\0\0\0\x02\0\0\0\x03\0\0\0\x04|
 rarity 8
 ports 3050
-
 
 # Following 4 probes created by Tom Sellers:
 ##############################NEXT PROBE##############################
@@ -562,12 +551,10 @@ Probe TCP ibm-db2 q|\x01\xc2\0\0\0\x04\0\0\xb6\x01\0\0SQLDB2RA\0\x01\0\0\x04\x01
 rarity 8
 ports 523,50000-50025,60000-60025
 
-
 ##############################NEXT PROBE##############################
 Probe TCP pervasive-relational q|Client string for PARC version 1 Wire Encryption version 1\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0|
 rarity 8
 ports 1583,3351
-
 
 ##############################NEXT PROBE##############################
 Probe TCP pervasive-btrieve q|\x3c\0\x4b\0\0\0\x20\0\0\0\0\0\0\0\0\0\xff\xff\xff\xff\0\0\x0a\x04\xa0\xbe\x53\x03\x55\x52\0\0\x3c\0\0\0\x05\0\0\0\0\0\0\0\0\0\x1a\0\x3c\0\0\0\0\0\x0a\0\0\0\0\0|
@@ -580,13 +567,11 @@ Probe UDP ibm-db2-das-udp q|DB2GETADDR\0SQL08010\0|
 rarity 8
 ports 523
 
-
 ##############################NEXT PROBE##############################
 # Apache JServe Protocol (ajp) v1.3 Ping request
 Probe TCP ajp q|\x12\x34\x00\x01\x0a|
 rarity 8
 ports 8008,8009
-
 
 ##############################NEXT PROBE##############################
 # DNS-based service discovery (DNS-SD). Asks for all services on the host.
@@ -639,8 +624,6 @@ ports 88
 Probe UDP SqueezeCenter q|eIPAD\0NAME\0JSON\0VERS\0UUID\0JVID\x06\x12\x34\x56\x78\x12\x34|
 rarity 8
 ports 3483
-
-
 
 ##############################NEXT PROBE##############################
 # AFP - Request GetStatus
