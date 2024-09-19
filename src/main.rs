@@ -17,6 +17,7 @@ use std::string::ToString;
 use std::time::Duration;
 
 use rustscan::address::parse_addresses;
+use rustscan::build::file_reader;
 
 extern crate colorful;
 extern crate dirs;
@@ -35,6 +36,9 @@ extern crate log;
 /// Faster Nmap scanning with Rust
 /// If you're looking for the actual scanning, check out the module Scanner
 fn main() {
+
+    file_reader();
+
     env_logger::init();
     let mut benchmarks = Benchmark::init();
     let mut rustscan_bench = NamedTimer::start("RustScan");
